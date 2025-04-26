@@ -1,6 +1,9 @@
 {
   "dependencies": {
-    "canvas-confetti": "^1.9.3"
+    "@types/jsonwebtoken": "^9.0.9",
+    "canvas-confetti": "^1.9.3",
+    "jsonwebtoken": "^9.0.2",
+    "ws": "^8.18.1"
   },
   "devDependencies": {
     "@types/canvas-confetti": "^1.9.0"
