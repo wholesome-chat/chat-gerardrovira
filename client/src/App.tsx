@@ -1,6 +1,7 @@
 import "./App.css";
 import { useEffect, useState } from "react";
 import confetti from "canvas-confetti";
+import { serialize } from "../../shared/websocketData";
 
 const token =
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6InRlc3R1c2VyIiwicm9sZSI6InVzZXIiLCJpYXQiOjE3NDU2ODE1ODQsImV4cCI6MTc0NjI4NjM4NH0.02Qs5LOapq68pgE_T_lzsw44ROUgVhsRYlAcHGxAIB8";
@@ -34,7 +35,12 @@ function App() {
 
   const handleSendMessage = () => {
     if (ws) {
-      ws.send("Hello world!");
+      ws.send(
+        serialize({
+          type: "MESSAGE",
+          data: "hello world",
+        })
+      );
       confetti({
         particleCount: 100,
         spread: 70,
