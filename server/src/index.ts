@@ -1,5 +1,6 @@
 import { WebSocketServer } from "ws";
 import jwt from "jsonwebtoken";
+import { deserialize } from "../../shared/websocketData";
 
 const PORT = 8080;
 const SECRET_KEY = "YOLO";
@@ -27,7 +28,15 @@ wss.on("connection", (ws, req) => {
     console.log("Authenticated user:", decoded);
 
     ws.on("message", (message) => {
-      console.log(`Received: ${message}`);
+      const data = deserialize(message.toString());
+      switch (data.type) {
+        case "MESSAGE":
+          console.log(`Received type MESSAGE: ${data.data}`);
+          break;
+        default:
+          console.log(`Unknown message type: ${data.type}`);
+          break;
+      }
       ws.send(`Server received: ${message}`);
     });
 
