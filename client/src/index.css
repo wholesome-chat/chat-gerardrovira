@@ -8,12 +8,11 @@ html,
 body,
 #root {
   height: 100%;
+  width: 100%;
   margin: 0;
 }
 
 body {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  background-color: #f9fafb; /* Optional: Tailwind's gray-50 */
+  background-color: #1a202c; /* Tailwind's gray-900 */
+  color: #f7fafc; /* Tailwind's gray-100 */
 }
