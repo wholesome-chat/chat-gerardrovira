@@ -2,7 +2,7 @@ import { WebSocketServer, WebSocket } from "ws";
 import jwt from "jsonwebtoken";
 import { deserialize, serialize } from "../../shared/websocketData";
 
-const PORT = 8080;
+const PORT = Number(process.env.PORT) || 8080; // Default to 8080 if PORT is not set
 const SECRET_KEY = "YOLO";
 
 const SERVER_NAME = "YOLO";
@@ -17,10 +17,22 @@ const token = jwt.sign(payload, SECRET_KEY, { expiresIn: "1w" });
 console.info(token);
 
 // const serversIps = 'github.fitxser.raw'
-const serverIps = ["localhost"];
+const serverIps = [
+  {
+    host: "localhost",
+    port: "3000",
+  },
+  {
+    host: "localhost",
+    port: "3000",
+  },
+];
 const receivers = new Set<WebSocket>();
 
-for (const serverIp of serverIps) {
+for (const { host, port } of serverIps) {
+  if (port === String(PORT)) {
+    continue;
+  }
   const ws = new WebSocket(`ws://${serverIp}:${PORT}?token=${token}`);
 
   ws.on("open", () => {

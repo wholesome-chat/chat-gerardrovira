@@ -6,13 +6,14 @@ import { serialize } from "../../shared/websocketData";
 const token =
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6InRlc3R1c2VyIiwicm9sZSI6InVzZXIiLCJpYXQiOjE3NDU2ODE1ODQsImV4cCI6MTc0NjI4NjM4NH0.02Qs5LOapq68pgE_T_lzsw44ROUgVhsRYlAcHGxAIB8";
 
+const port = import.meta.env.VITE_SERVER_PORT || 8080; // Default to 8080 if VITE_PORT is not set
+
 function App() {
   const [messages, setMessages] = useState<string[]>([]);
   const [ws, setWs] = useState<WebSocket | null>(null);
 
   useEffect(() => {
-    // Replace with the token generated from your server
-    const socket = new WebSocket(`ws://localhost:8080?token=${token}`);
+    const socket = new WebSocket(`ws://localhost:${port}?token=${token}`);
 
     socket.onopen = () => {
       console.log("Connected to WebSocket server");
@@ -39,6 +40,7 @@ function App() {
         serialize({
           type: "MESSAGE",
           data: "hello world",
+          server: "123",
         })
       );
       confetti({
