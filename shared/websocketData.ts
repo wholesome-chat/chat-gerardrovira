@@ -1,5 +1,11 @@
 export type USER_ID = string;
 
+export type User = {
+  id: USER_ID;
+  name?: string;
+  email?: string;
+};
+
 export type ClientMessage = {
   type: "CLIENT_MESSAGE";
   content: string;
@@ -19,9 +25,15 @@ export type ServerMessage = {
   updated: number;
 };
 
+export type ServerActiveUsers = {
+  type: "ACTIVE_USERS";
+  users: Array<User>;
+};
+
 type WebsocketData =
   | ClientMessage
   | ServerMessage
+  | ServerActiveUsers
   | { type: "AUTH"; username: string; password: string }
   | { type: "REGISTER_SERVER" };
 

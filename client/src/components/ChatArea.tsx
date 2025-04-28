@@ -20,7 +20,7 @@ export default function ChatArea() {
               if (message.type === "SERVER_MESSAGE") {
                 key = message.id;
                 created = new Date(message.created).toLocaleTimeString();
-                userName = message.userId.substring(0, 16);
+                userName = message.userId.substring(0, 12);
               }
               return (
                 <React.Fragment key={key}>

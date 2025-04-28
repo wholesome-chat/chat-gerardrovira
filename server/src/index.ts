@@ -4,6 +4,7 @@ import {
   serialize,
   USER_ID,
   ClientMessage,
+  User,
 } from "../../shared/websocketData";
 
 const PORT = Number(process.env.PORT) || 8080;
@@ -28,6 +29,8 @@ wss.on("connection", (ws, req) => {
     roomConnections.set(room, currentRoomConnections);
   }
   currentRoomConnections.set(userId, ws);
+
+  onActiveUsers();
 
   ws.on("message", (message) => {
     const data = deserialize(message.toString());
@@ -61,12 +64,28 @@ wss.on("connection", (ws, req) => {
     }
   }
 
+  function onActiveUsers() {
+    const users: Array<User> = Array.from(currentRoomConnections.keys()).map(
+      (userId) => ({
+        id: userId,
+      })
+    );
+    for (const ws of currentRoomConnections.values()) {
+      ws.send(
+        serialize({
+          type: "ACTIVE_USERS",
+          users,
+        })
+      );
+    }
+  }
+
   ws.on("close", () => {
-    console.log("Client disconnected");
     currentRoomConnections.delete(userId);
     if (currentRoomConnections.size === 0) {
       roomConnections.delete(room);
     }
+    onActiveUsers();
   });
 });
 

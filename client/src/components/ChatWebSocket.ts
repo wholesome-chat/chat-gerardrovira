@@ -3,6 +3,7 @@ import {
   deserialize,
   serialize,
   ServerMessage,
+  User,
 } from "../../../shared/websocketData";
 
 enum CONNECTED_STATUS {
@@ -14,6 +15,7 @@ enum CONNECTED_STATUS {
 class ChatWebSocket {
   #ws: null | WebSocket = null;
   #mesageListeners: Set<(message: ServerMessage) => void> = new Set();
+  #activeUsersListeners: Set<(activeUsers: Array<User>) => void> = new Set();
   connected: CONNECTED_STATUS = CONNECTED_STATUS.DISCONNECTED;
 
   connect(host: string, port: number, room: string) {
@@ -39,11 +41,15 @@ class ChatWebSocket {
             listener(data);
           }
           break;
+        case "ACTIVE_USERS":
+          for (const listener of this.#activeUsersListeners) {
+            listener(data.users);
+          }
       }
     };
   }
 
-  onMessage(fn: (message: ServerMessage) => void) {
+  onMessage(fn: (message: ServerMessage) => void): () => void {
     this.#mesageListeners.add(fn);
     return () => {
       this.#mesageListeners.delete(fn);
@@ -56,6 +62,13 @@ class ChatWebSocket {
     }
     const ws = this.#ws!;
     ws.send(serialize(message));
+  }
+
+  onActiveUsers(fn: (activeUsers: Array<User>) => void): () => void {
+    this.#activeUsersListeners.add(fn);
+    return () => {
+      this.#activeUsersListeners.delete(fn);
+    };
   }
 }
 

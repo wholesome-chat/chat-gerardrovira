@@ -1,6 +1,10 @@
 import { useCallback, useEffect, useState } from "react";
 import { wsInstance } from "./ChatWebSocket";
-import { ClientMessage, ServerMessage } from "../../../shared/websocketData";
+import {
+  ClientMessage,
+  ServerMessage,
+  User,
+} from "../../../shared/websocketData";
 import { ChatContext } from "./ChatContext";
 
 export type Message = ClientMessage | ServerMessage;
@@ -17,9 +21,12 @@ export default function ChatManager({
   children: React.ReactNode;
 }) {
   const [messages, setMessages] = useState<Array<Message>>([]);
+  const [activeUsers, setActiveUsers] = useState<Array<User>>([]);
+
   useEffect(() => {
     wsInstance.connect(HOST, PORT, ROOM);
   }, []);
+
   useEffect(() => {
     setMessages([]);
     return wsInstance.onMessage((message) => {
@@ -28,6 +35,11 @@ export default function ChatManager({
       }
     });
   }, [channel]);
+
+  useEffect(() => {
+    return wsInstance.onActiveUsers(setActiveUsers);
+  }, []);
+
   const sendMessage = useCallback(
     (content: string, optimisticId: string) => {
       wsInstance.sendMessage({
@@ -41,6 +53,8 @@ export default function ChatManager({
   );
 
   return (
-    <ChatContext value={{ messages, sendMessage }}>{children}</ChatContext>
+    <ChatContext value={{ activeUsers, messages, sendMessage }}>
+      {children}
+    </ChatContext>
   );
 }
