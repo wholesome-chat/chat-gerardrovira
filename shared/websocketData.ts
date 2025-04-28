@@ -1,9 +1,27 @@
+export type USER_ID = string;
+
+export type ClientMessage = {
+  type: "CLIENT_MESSAGE";
+  content: string;
+  channel: string;
+  optimisticId: string;
+};
+
+export type ServerMessage = {
+  type: "SERVER_MESSAGE";
+  id: string;
+  optimisticId: string;
+  content: string;
+  server: string;
+  userId: USER_ID;
+  channel: string;
+  created: number;
+  updated: number;
+};
+
 type WebsocketData =
-  | {
-      type: "MESSAGE";
-      data: string;
-      server: string;
-    }
+  | ClientMessage
+  | ServerMessage
   | { type: "AUTH"; username: string; password: string }
   | { type: "REGISTER_SERVER" };
 

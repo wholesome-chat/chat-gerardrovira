@@ -1,7 +1,9 @@
 import React from "react";
 import MessageInput from "./MessageInput";
+import { useChatContext } from "./ChatContext";
 
-const ChatArea = () => {
+export default function ChatArea() {
+  const { messages } = useChatContext();
   return (
     <div className="flex-1 flex flex-col p-4">
       <div className="border-b border-gray-700 pb-2 mb-4">
@@ -11,10 +13,25 @@ const ChatArea = () => {
         <div className="flex items-start space-x-4">
           <div className="w-10 h-10 bg-gray-600 rounded-full"></div>
           <div>
-            <p className="font-semibold">
-              Name <span className="text-sm text-gray-400">Date</span>
-            </p>
-            <p className="text-gray-300">Message</p>
+            {messages.map((message) => {
+              let key = message.optimisticId;
+              let created = "";
+              let userName = "";
+              if (message.type === "SERVER_MESSAGE") {
+                key = message.id;
+                created = new Date(message.created).toLocaleTimeString();
+                userName = message.userId.substring(0, 16);
+              }
+              return (
+                <React.Fragment key={key}>
+                  <p className="font-semibold">
+                    {userName}{" "}
+                    <span className="text-sm text-gray-400">{created}</span>
+                  </p>
+                  <p className="text-gray-300">{message.content}</p>
+                </React.Fragment>
+              );
+            })}
           </div>
         </div>
         {/* Repeat message bubbles */}
@@ -22,6 +39,4 @@ const ChatArea = () => {
       <MessageInput />
     </div>
   );
-};
-
-export default ChatArea;
+}

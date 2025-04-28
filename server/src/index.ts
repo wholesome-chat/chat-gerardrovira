@@ -1,114 +1,73 @@
 import { WebSocketServer, WebSocket } from "ws";
-import jwt from "jsonwebtoken";
-import { deserialize, serialize } from "../../shared/websocketData";
+import {
+  deserialize,
+  serialize,
+  USER_ID,
+  ClientMessage,
+} from "../../shared/websocketData";
 
-const PORT = Number(process.env.PORT) || 8080; // Default to 8080 if PORT is not set
-const SECRET_KEY = "YOLO";
-
+const PORT = Number(process.env.PORT) || 8080;
 const SERVER_NAME = "YOLO";
 
 const wss = new WebSocketServer({ port: PORT });
-
-const payload = {
-  username: "testuser",
-  role: "user",
-};
-const token = jwt.sign(payload, SECRET_KEY, { expiresIn: "1w" });
-console.info(token);
-
-// const serversIps = 'github.fitxser.raw'
-const serverIps = [
-  {
-    host: "localhost",
-    port: "3000",
-  },
-  {
-    host: "localhost",
-    port: "3000",
-  },
-];
-const receivers = new Set<WebSocket>();
-
-for (const { host, port } of serverIps) {
-  if (port === String(PORT)) {
-    continue;
-  }
-  const ws = new WebSocket(`ws://${serverIp}:${PORT}?token=${token}`);
-
-  ws.on("open", () => {
-    // console.log(`Connected to server at ${serverIp}`);
-    // receivers.add(ws);
-  });
-
-  ws.on("message", (message) => {
-    const data = deserialize(message.toString());
-    // if (data.type === "MESSAGE") {
-    // for (const receiverWs of receivers) {
-    //   receiverWs.send(
-    //     serialize({
-    //       type: "MESSAGE",
-    //       data: `Received ${data.data}`,
-    //       server: SERVER_NAME,
-    //     })
-    //   );
-    // }
-    // }
-  });
-
-  ws.on("close", () => {
-    // console.log(`Disconnected from server at ${serverIp}`);
-    receivers.delete(ws);
-  });
-
-  ws.on("error", (err) => {
-    // console.error(`Error with server at ${serverIp}:`, err);
-  });
-}
+const roomConnections = new Map<string, Map<USER_ID, WebSocket>>();
 
 wss.on("connection", (ws, req) => {
   const url = new URL(req.url || "", `http://${req.headers.host}`);
-  const token = url.searchParams.get("token");
-
-  if (!token) {
-    ws.close(1008, "Authentication required");
+  const room = url.searchParams.get("room");
+  if (room == null) {
+    ws.close(3000, "Room required");
     return;
   }
 
-  try {
-    const decoded = jwt.verify(token, SECRET_KEY);
-    console.log("Authenticated user:", decoded);
-    receivers.add(ws);
+  const userId = crypto.randomUUID();
 
-    ws.on("message", (message) => {
-      const data = deserialize(message.toString());
-      switch (data.type) {
-        case "MESSAGE":
-          console.log(`Received type MESSAGE: ${data.data}`);
-          break;
-        default:
-          console.log(`Unknown message type: ${data.type}`);
-          break;
-      }
-      if (data.type === "MESSAGE") {
-        for (const receiverWs of receivers) {
-          receiverWs.send(
-            serialize({
-              type: "MESSAGE",
-              data: `Received ${data.data}`,
-              server: SERVER_NAME,
-            })
-          );
-        }
-      }
-    });
-
-    ws.on("close", () => {
-      console.log("Client disconnected");
-      receivers.delete(ws);
-    });
-  } catch (err) {
-    ws.close(1008, "Invalid token");
+  let currentRoomConnections = roomConnections.get(room);
+  if (currentRoomConnections === undefined) {
+    currentRoomConnections = new Map<USER_ID, WebSocket>();
+    roomConnections.set(room, currentRoomConnections);
   }
+  currentRoomConnections.set(userId, ws);
+
+  ws.on("message", (message) => {
+    const data = deserialize(message.toString());
+    switch (data.type) {
+      case "CLIENT_MESSAGE":
+        onMessage(data);
+        break;
+      default:
+        console.log(`Unknown message type: ${data.type}`);
+        break;
+    }
+  });
+
+  function onMessage(message: ClientMessage) {
+    const { content, channel, optimisticId } = message;
+    const now = Date.now();
+    for (const ws of currentRoomConnections.values()) {
+      ws.send(
+        serialize({
+          type: "SERVER_MESSAGE",
+          id: crypto.randomUUID(),
+          optimisticId,
+          content,
+          channel,
+          server: SERVER_NAME,
+          userId,
+          created: now,
+          updated: now,
+        })
+      );
+    }
+  }
+
+  ws.on("close", () => {
+    console.log("Client disconnected");
+    currentRoomConnections.delete(userId);
+    if (currentRoomConnections.size === 0) {
+      roomConnections.delete(room);
+    }
+  });
 });
 
 console.log(`WebSocket server is running on ws://localhost:${PORT}`);
