@@ -12,5 +12,11 @@
   "devDependencies": {
     "@types/ws": "^8.18.1",
     "ts-node-dev": "^2.0.0"
+  },
+  "dependencies": {
+    "@ai-sdk/deepseek": "^0.2.13",
+    "ai": "^4.3.10",
+    "deepseek": "^0.0.2",
+    "ollama": "^0.5.15"
   }
 }

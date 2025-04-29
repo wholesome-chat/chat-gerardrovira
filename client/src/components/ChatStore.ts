@@ -32,7 +32,25 @@ class ChatStore {
     const db = await this.dbPromise;
     const tx = db.transaction("messages", "readwrite");
     const store = tx.objectStore("messages");
-    store.put({ ...message, room, channel });
+
+    // Check if a message with the same ID already exists
+    const existingMessage = await new Promise<ServerMessage | undefined>(
+      (resolve, reject) => {
+        const request = store.get(message.id);
+        request.onsuccess = () =>
+          resolve(request.result as ServerMessage | undefined);
+        request.onerror = () => reject(request.error);
+      }
+    );
+
+    if (existingMessage) {
+      // Update the existing message
+      store.put({ ...existingMessage, ...message, room, channel });
+    } else {
+      // Add the new message
+      store.put({ ...message, room, channel });
+    }
+
     await new Promise<void>((resolve, reject) => {
       tx.oncomplete = () => resolve();
       tx.onerror = () => reject(tx.error);

@@ -7,6 +7,7 @@ import {
   User,
   ClientUser,
 } from "../../shared/websocketData";
+import { AI_USER, streamChatResponse } from "./ai";
 
 const PORT = Number(process.env.PORT) || 8080;
 const SERVER_NAME = "YOLO";
@@ -14,7 +15,7 @@ const SERVER_NAME = "YOLO";
 const wss = new WebSocketServer({ port: PORT });
 const roomConnections = new Map<
   string,
-  Map<USER_ID, { ws: WebSocket; user: User }>
+  Map<USER_ID, { ws: null | WebSocket; user: User }>
 >();
 
 wss.on("connection", (ws, req) => {
@@ -29,7 +30,11 @@ wss.on("connection", (ws, req) => {
 
   let currentRoomConnections = roomConnections.get(room);
   if (currentRoomConnections === undefined) {
-    currentRoomConnections = new Map<USER_ID, { ws: WebSocket; user: User }>();
+    currentRoomConnections = new Map<
+      USER_ID,
+      { ws: null | WebSocket; user: User }
+    >();
+    currentRoomConnections.set(AI_USER.id, { ws: null, user: AI_USER });
     roomConnections.set(room, currentRoomConnections);
   }
   currentRoomConnections.set(userId, { ws, user: { id: userId } });
@@ -51,23 +56,47 @@ wss.on("connection", (ws, req) => {
     }
   });
 
-  function onMessage(message: ClientMessage) {
-    const { content, channel, optimisticId } = message;
+  async function onMessage(message: ClientMessage) {
     const now = Date.now();
-    for (const { ws } of currentRoomConnections.values()) {
-      ws.send(
-        serialize({
-          type: "SERVER_MESSAGE",
-          id: crypto.randomUUID(),
-          optimisticId,
+    if (message.content.toLowerCase().startsWith("@ai")) {
+      const prompt = message.content.slice(3).trim();
+      const responseStream = await streamChatResponse(prompt);
+      const messageId = crypto.randomUUID();
+      for await (const content of responseStream) {
+        sendMessage(messageId, now, Date.now(), AI_USER.id, {
+          ...message,
           content,
-          channel,
-          server: SERVER_NAME,
-          userId,
-          created: now,
-          updated: now,
-        })
-      );
+        });
+      }
+    } else {
+      sendMessage(crypto.randomUUID(), now, now, userId, message);
+    }
+  }
+
+  function sendMessage(
+    messageId: string,
+    created: number,
+    updated: number,
+    userId: string,
+    message: ClientMessage
+  ) {
+    const { content, channel, optimisticId } = message;
+    for (const { ws } of currentRoomConnections.values()) {
+      if (ws !== null) {
+        ws.send(
+          serialize({
+            type: "SERVER_MESSAGE",
+            id: messageId,
+            optimisticId,
+            content,
+            channel,
+            server: SERVER_NAME,
+            userId,
+            created,
+            updated,
+          })
+        );
+      }
     }
   }
 
@@ -76,12 +105,14 @@ wss.on("connection", (ws, req) => {
       ({ user }) => user
     );
     for (const { ws } of currentRoomConnections.values()) {
-      ws.send(
-        serialize({
-          type: "ACTIVE_USERS",
-          users,
-        })
-      );
+      if (ws !== null) {
+        ws.send(
+          serialize({
+            type: "ACTIVE_USERS",
+            users,
+          })
+        );
+      }
     }
   }
 

@@ -44,6 +44,17 @@ export default function ChatArea({ channel }: { channel: string }) {
       chatContainer.scrollTop = chatContainer.scrollHeight;
     }
   }, [messages]);
+
+  useEffect(() => {
+    const chatContainer = chatContainerRef.current;
+    if (chatContainer) {
+      setTimeout(() => {
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+        // TODO fix me
+      }, 200);
+    }
+  }, []);
+
   return (
     <div className="flex-1 flex flex-col p-4">
       <div className="border-b border-gray-700 pb-2 mb-4">

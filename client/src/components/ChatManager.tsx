@@ -54,7 +54,19 @@ export default function ChatManager({
         await restorationPromise.current;
       }
       if (message.channel === channel) {
-        setMessages((prevMessages) => [...prevMessages, message]);
+        setMessages((prevMessages) => {
+          const existingIndex = prevMessages.findIndex(
+            (m) => m.type === "SERVER_MESSAGE" && m.id === message.id
+          );
+          if (existingIndex !== -1) {
+            // Replace the existing message
+            const updatedMessages = [...prevMessages];
+            updatedMessages[existingIndex] = message;
+            return updatedMessages;
+          }
+          // Add the new message
+          return [...prevMessages, message];
+        });
       }
       storeInstance.saveMessage(ROOM, message.channel, message).catch((e) => {
         console.error(e);
