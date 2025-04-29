@@ -30,7 +30,22 @@ export type ServerActiveUsers = {
   users: Array<User>;
 };
 
-type WebsocketData = ClientMessage | ServerMessage | ServerActiveUsers;
+export type ClientUser = {
+  type: "CLIENT_USER";
+  user: User;
+};
+
+export type Self = {
+  type: "SELF";
+  user: User;
+};
+
+type WebsocketData =
+  | ClientMessage
+  | ServerMessage
+  | ServerActiveUsers
+  | ClientUser
+  | Self;
 
 export function serialize(data: WebsocketData) {
   return JSON.stringify(data);

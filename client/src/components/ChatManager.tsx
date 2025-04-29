@@ -7,6 +7,7 @@ import {
 } from "../../../shared/websocketData";
 import { ChatContext } from "./ChatContext";
 import { storeInstance } from "./ChatStore"; // Import the storage class
+import { UserFormData } from "./UserForm";
 
 export type Message = ClientMessage | ServerMessage;
 
@@ -17,21 +18,34 @@ const PORT = 8080;
 export default function ChatManager({
   channel,
   children,
+  userFormData,
 }: {
+  userFormData: UserFormData;
   channel: string;
   children: React.ReactNode;
 }) {
   const [messages, setMessages] = useState<Array<Message>>([]);
+  const [user, setUser] = useState<null | User>(null);
   const [activeUsers, setActiveUsers] = useState<Array<User>>([]);
-  const restorationPromise = useRef<Promise<void> | null>(null); // Track restoration promise
+  const restorationPromise = useRef<Promise<void> | null>(null);
 
   useEffect(() => {
     wsInstance.connect(HOST, PORT, ROOM);
+
     restorationPromise.current = (async () => {
       const persistedMessages = await storeInstance.getMessages(ROOM, channel);
       setMessages(persistedMessages);
     })();
+
+    return wsInstance.onSelf(setUser);
   }, [channel]);
+
+  useEffect(() => {
+    const handleConnected = () => {
+      wsInstance.editUser({ id: "", ...userFormData });
+    };
+    return wsInstance.onConnected(handleConnected);
+  }, [userFormData]);
 
   useEffect(() => {
     setMessages([]);
@@ -67,7 +81,7 @@ export default function ChatManager({
   );
 
   return (
-    <ChatContext value={{ activeUsers, messages, sendMessage }}>
+    <ChatContext value={{ activeUsers, messages, sendMessage, user }}>
       {children}
     </ChatContext>
   );

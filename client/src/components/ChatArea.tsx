@@ -1,9 +1,17 @@
 import React, { useEffect, useRef } from "react";
 import MessageInput from "./MessageInput";
 import { useChatContext } from "./ChatContext";
+import { User } from "../../../shared/websocketData";
 
 export default function ChatArea() {
-  const { messages } = useChatContext();
+  const { messages, activeUsers } = useChatContext();
+  const userIdToUserMap = React.useMemo(() => {
+    const map = new Map<string, User>();
+    activeUsers.forEach((user) => {
+      map.set(user.id, user);
+    });
+    return map;
+  }, [activeUsers]);
   const chatContainerRef = React.useRef<HTMLDivElement | null>(null);
   const shouldScroll = useRef<boolean>(true);
 
@@ -48,7 +56,12 @@ export default function ChatArea() {
           if (message.type === "SERVER_MESSAGE") {
             key = message.id;
             created = new Date(message.created).toLocaleTimeString();
-            userName = message.userId.substring(0, 12);
+            const user = userIdToUserMap.get(message.userId);
+            if (user !== undefined) {
+              userName = (user.name ?? user.id).substring(0, 12);
+            } else {
+              userName = message.id.substring(0, 12);
+            }
           }
           return (
             <div key={key} className="flex items-start space-x-4">

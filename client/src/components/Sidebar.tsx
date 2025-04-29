@@ -1,6 +1,8 @@
 import React from "react";
+import { useChatContext } from "./ChatContext";
 
-const Sidebar = () => {
+export default function Sidebar() {
+  const { user } = useChatContext();
   return (
     <div className="w-1/5 bg-gray-800 p-4 flex flex-col justify-between">
       <div>
@@ -11,14 +13,18 @@ const Sidebar = () => {
         </ul>
       </div>
       <div className="flex items-center space-x-2">
-        <div className="w-10 h-10 bg-gray-600 rounded-full"></div>
-        <div>
-          <p className="font-semibold">Name</p>
-          <p className="text-sm text-green-400">Online</p>
-        </div>
+        {user !== null && (
+          <>
+            <div className="w-10 h-10 bg-gray-600 rounded-full"></div>
+            <div>
+              <p className="font-semibold">
+                {(user.name ?? user.id).substring(0, 12)}
+              </p>
+              <p className="text-sm text-green-400">Online</p>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );
-};
-
-export default Sidebar;
+}

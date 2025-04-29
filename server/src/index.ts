@@ -5,13 +5,17 @@ import {
   USER_ID,
   ClientMessage,
   User,
+  ClientUser,
 } from "../../shared/websocketData";
 
 const PORT = Number(process.env.PORT) || 8080;
 const SERVER_NAME = "YOLO";
 
 const wss = new WebSocketServer({ port: PORT });
-const roomConnections = new Map<string, Map<USER_ID, WebSocket>>();
+const roomConnections = new Map<
+  string,
+  Map<USER_ID, { ws: WebSocket; user: User }>
+>();
 
 wss.on("connection", (ws, req) => {
   const url = new URL(req.url || "", `http://${req.headers.host}`);
@@ -25,10 +29,10 @@ wss.on("connection", (ws, req) => {
 
   let currentRoomConnections = roomConnections.get(room);
   if (currentRoomConnections === undefined) {
-    currentRoomConnections = new Map<USER_ID, WebSocket>();
+    currentRoomConnections = new Map<USER_ID, { ws: WebSocket; user: User }>();
     roomConnections.set(room, currentRoomConnections);
   }
-  currentRoomConnections.set(userId, ws);
+  currentRoomConnections.set(userId, { ws, user: { id: userId } });
 
   onActiveUsers();
 
@@ -37,6 +41,9 @@ wss.on("connection", (ws, req) => {
     switch (data.type) {
       case "CLIENT_MESSAGE":
         onMessage(data);
+        break;
+      case "CLIENT_USER":
+        onEditUser(data);
         break;
       default:
         console.log(`Unknown message type: ${data.type}`);
@@ -47,7 +54,7 @@ wss.on("connection", (ws, req) => {
   function onMessage(message: ClientMessage) {
     const { content, channel, optimisticId } = message;
     const now = Date.now();
-    for (const ws of currentRoomConnections.values()) {
+    for (const { ws } of currentRoomConnections.values()) {
       ws.send(
         serialize({
           type: "SERVER_MESSAGE",
@@ -65,12 +72,10 @@ wss.on("connection", (ws, req) => {
   }
 
   function onActiveUsers() {
-    const users: Array<User> = Array.from(currentRoomConnections.keys()).map(
-      (userId) => ({
-        id: userId,
-      })
+    const users: Array<User> = Array.from(currentRoomConnections.values()).map(
+      ({ user }) => user
     );
-    for (const ws of currentRoomConnections.values()) {
+    for (const { ws } of currentRoomConnections.values()) {
       ws.send(
         serialize({
           type: "ACTIVE_USERS",
@@ -78,6 +83,20 @@ wss.on("connection", (ws, req) => {
         })
       );
     }
+  }
+
+  function onEditUser({ user }: ClientUser) {
+    const storedUser = currentRoomConnections.get(userId).user;
+    storedUser.name = user.name;
+    storedUser.email = user.email;
+
+    onActiveUsers();
+    ws.send(
+      serialize({
+        type: "SELF",
+        user: storedUser,
+      })
+    );
   }
 
   ws.on("close", () => {

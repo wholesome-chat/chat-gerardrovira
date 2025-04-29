@@ -10,7 +10,7 @@ export default function UserList() {
         {activeUsers.map((user) => (
           <li key={user.id} className="flex items-center space-x-2">
             <div className="w-10 h-10 bg-gray-600 rounded-full"></div>
-            <p>{user.id.substring(0, 12)}</p>
+            <p>{(user.name ?? user.id).substring(0, 12)}</p>
           </li>
         ))}
       </ul>
