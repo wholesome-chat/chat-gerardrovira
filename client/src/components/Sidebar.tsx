@@ -1,16 +1,36 @@
-import React from "react";
+import React, { useState } from "react";
 import { useChatContext } from "./ChatContext";
 import Avatar from "./Avatar";
 
-export default function Sidebar() {
-  const { user } = useChatContext();
+export default function Sidebar({
+  onChannelSelect,
+}: {
+  onChannelSelect: (channel: string) => void;
+}) {
+  const { user, channel } = useChatContext();
+  const [selectedChannel, setSelectedChannel] = useState(channel);
+
+  const handleChannelClick = (newChannel: string) => {
+    setSelectedChannel(newChannel);
+    onChannelSelect(newChannel); // Notify parent of the selected channel
+  };
+
   return (
     <div className="w-1/5 bg-gray-800 p-4 flex flex-col justify-between">
       <div>
         <h2 className="text-xl font-bold mb-4">Channels</h2>
         <ul className="space-y-2">
-          <li className="cursor-pointer hover:text-gray-400">Channel 1</li>
-          <li className="cursor-pointer hover:text-gray-400">Channel 2</li>
+          {["Main", "Second", "Test"].map((ch) => (
+            <li
+              key={ch}
+              className={`cursor-pointer hover:text-gray-400 ${
+                selectedChannel === ch ? "text-blue-400 font-bold" : ""
+              }`}
+              onClick={() => handleChannelClick(ch)}
+            >
+              {ch}
+            </li>
+          ))}
         </ul>
       </div>
       <div className="flex items-center space-x-2">

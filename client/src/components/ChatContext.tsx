@@ -3,11 +3,13 @@ import { Message } from "./ChatManager";
 import { User } from "../../../shared/websocketData";
 
 export const ChatContext = createContext<{
+  channel: string;
   activeUsers: Array<User>;
   messages: Array<Message>;
   sendMessage: (content: string, optimisticId: string) => void;
   user: User | null; // Add user to the context
 }>({
+  channel: "",
   activeUsers: [],
   messages: [],
   sendMessage: () => {

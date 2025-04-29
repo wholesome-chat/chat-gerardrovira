@@ -4,7 +4,7 @@ import { useChatContext } from "./ChatContext";
 import { User } from "../../../shared/websocketData";
 import Avatar from "./Avatar";
 
-export default function ChatArea() {
+export default function ChatArea({ channel }: { channel: string }) {
   const { messages, activeUsers } = useChatContext();
   const userIdToUserMap = React.useMemo(() => {
     const map = new Map<string, User>();
@@ -47,7 +47,7 @@ export default function ChatArea() {
   return (
     <div className="flex-1 flex flex-col p-4">
       <div className="border-b border-gray-700 pb-2 mb-4">
-        <h2 className="text-2xl font-bold">Channel Name</h2>
+        <h2 className="text-2xl font-bold">{channel}</h2>
       </div>
       <div ref={chatContainerRef} className="flex-1 overflow-y-auto space-y-4">
         {messages.map((message) => {

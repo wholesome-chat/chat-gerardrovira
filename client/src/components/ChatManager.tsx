@@ -56,7 +56,7 @@ export default function ChatManager({
       if (message.channel === channel) {
         setMessages((prevMessages) => [...prevMessages, message]);
       }
-      storeInstance.saveMessage(ROOM, channel, message).catch((e) => {
+      storeInstance.saveMessage(ROOM, message.channel, message).catch((e) => {
         console.error(e);
       });
     };
@@ -81,7 +81,7 @@ export default function ChatManager({
   );
 
   return (
-    <ChatContext value={{ activeUsers, messages, sendMessage, user }}>
+    <ChatContext value={{ channel, activeUsers, messages, sendMessage, user }}>
       {children}
     </ChatContext>
   );
