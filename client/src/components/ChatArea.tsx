@@ -2,6 +2,7 @@ import React, { useEffect, useRef } from "react";
 import MessageInput from "./MessageInput";
 import { useChatContext } from "./ChatContext";
 import { User } from "../../../shared/websocketData";
+import Avatar from "./Avatar";
 
 export default function ChatArea() {
   const { messages, activeUsers } = useChatContext();
@@ -53,19 +54,21 @@ export default function ChatArea() {
           let key = message.optimisticId;
           let created = "";
           let userName = "";
+          let email: void | string = undefined;
           if (message.type === "SERVER_MESSAGE") {
             key = message.id;
             created = new Date(message.created).toLocaleTimeString();
             const user = userIdToUserMap.get(message.userId);
             if (user !== undefined) {
               userName = (user.name ?? user.id).substring(0, 12);
+              email = user.email;
             } else {
               userName = message.id.substring(0, 12);
             }
           }
           return (
             <div key={key} className="flex items-start space-x-4">
-              <div className="w-10 h-10 bg-gray-600 rounded-full"></div>
+              <Avatar email={email} />
               <div>
                 <p className="font-semibold">
                   {userName}{" "}

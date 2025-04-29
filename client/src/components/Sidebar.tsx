@@ -1,5 +1,6 @@
 import React from "react";
 import { useChatContext } from "./ChatContext";
+import Avatar from "./Avatar";
 
 export default function Sidebar() {
   const { user } = useChatContext();
@@ -15,7 +16,7 @@ export default function Sidebar() {
       <div className="flex items-center space-x-2">
         {user !== null && (
           <>
-            <div className="w-10 h-10 bg-gray-600 rounded-full"></div>
+            <Avatar email={user.email} />
             <div>
               <p className="font-semibold">
                 {(user.name ?? user.id).substring(0, 12)}
