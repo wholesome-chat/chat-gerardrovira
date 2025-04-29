@@ -30,12 +30,7 @@ export type ServerActiveUsers = {
   users: Array<User>;
 };
 
-type WebsocketData =
-  | ClientMessage
-  | ServerMessage
-  | ServerActiveUsers
-  | { type: "AUTH"; username: string; password: string }
-  | { type: "REGISTER_SERVER" };
+type WebsocketData = ClientMessage | ServerMessage | ServerActiveUsers;
 
 export function serialize(data: WebsocketData) {
   return JSON.stringify(data);

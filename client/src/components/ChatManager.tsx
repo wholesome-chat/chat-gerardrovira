@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { wsInstance } from "./ChatWebSocket";
 import {
   ClientMessage,
@@ -6,6 +6,7 @@ import {
   User,
 } from "../../../shared/websocketData";
 import { ChatContext } from "./ChatContext";
+import { storeInstance } from "./ChatStore"; // Import the storage class
 
 export type Message = ClientMessage | ServerMessage;
 
@@ -22,18 +23,31 @@ export default function ChatManager({
 }) {
   const [messages, setMessages] = useState<Array<Message>>([]);
   const [activeUsers, setActiveUsers] = useState<Array<User>>([]);
+  const restorationPromise = useRef<Promise<void> | null>(null); // Track restoration promise
 
   useEffect(() => {
     wsInstance.connect(HOST, PORT, ROOM);
-  }, []);
+    restorationPromise.current = (async () => {
+      const persistedMessages = await storeInstance.getMessages(ROOM, channel);
+      setMessages(persistedMessages);
+    })();
+  }, [channel]);
 
   useEffect(() => {
     setMessages([]);
-    return wsInstance.onMessage((message) => {
+    const handleMessage = async (message: ServerMessage) => {
+      if (restorationPromise.current != null) {
+        await restorationPromise.current;
+      }
       if (message.channel === channel) {
         setMessages((prevMessages) => [...prevMessages, message]);
       }
-    });
+      storeInstance.saveMessage(ROOM, channel, message).catch((e) => {
+        console.error(e);
+      });
+    };
+
+    return wsInstance.onMessage(handleMessage);
   }, [channel]);
 
   useEffect(() => {
